@@ -1,0 +1,150 @@
+{% extends 'admin/base_template.html' %}
+{% load static %}
+{% load get_item %}
+{% load image_thumb %}
+{% load field_data %}
+
+{% block title %} {{ title }} {% endblock %}
+
+
+{% block page_title %} {{ title }} {% endblock %}
+
+
+{% block nav_ol %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+    <li class="breadcrumb-item ">
+        <a href="{% url list_url %}">{{ title }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="&quot;page&quot;">
+        Создать
+    </li>
+</ol>
+{% endblock %}
+
+{% block content_width %} class="col-11" {% endblock %}
+
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    <input type="hidden" name="dropzone-key" value="{{ dropzone_key }}">
+    <input type="hidden" name="id" value="{{ object.id }}">
+    <input type="hidden" name="url" value="{{ request.get_full_path }}">
+    <div class="card mt-3">
+        <div class="crd-header p-4 pb-0">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                {% for lang in langs %}
+                {% if lang == langs.first %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-3 py-2 active" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                        data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                        aria-selected="true">{{ lang.name }}</button>
+                </li>
+                {% else %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-3 py-2" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                        data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                        aria-selected="false">{{ lang.name }}</button>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-bodyb p-5">
+            <div class="tab-content" id="myTabContent">
+                {% for lang in langs %}
+                {% if lang == langs.first %}
+                <div class="tab-pane fade show active" id="{{ lang.code }}" role="tabpanel"
+                    aria-labelledby="{{ lang.code }}">
+                    {% else %}
+                    <div class="tab-pane fade" id="{{ lang.code }}" role="tabpanel" aria-labelledby="{{ lang.code }}">
+
+                        {% endif %}
+
+                        <div class="form-group">
+                            <!-- Label  -->
+                            <label {% if lang.default %} class="form-label required" {% else %} class="form-label" {% endif %}>
+                                Загловок
+                            </label>
+                            <br>
+                            <!-- Input -->
+                            <input type="text" name="title#{{ lang.code }}" class="form-control" 
+                            value="{% field_data field='title' lang=lang %}"
+                            {% if lang.default %} required {% endif %}>
+                            {% if lang.default %}
+                            <div class="invalid-feedback" style="display: block;">
+                                {% if errors.title %}
+                                {{ errors.title|list_item:0 }}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {%  if app_name != "service" %}
+                        <!-- Project description -->
+                        <div class="form-group">
+
+                            <!-- Label -->
+                            <label class="form-label mb-1">
+                                Текст
+                            </label>
+                            <br>
+                            <!-- Textarea -->
+                            <textarea class="editor" name="text_header#{{ lang.code }}" placeholder="Text">{% field_data field='text_header' lang=lang %}</textarea>
+                        </div>
+
+                        <!-- Project description -->
+                        <div class="form-group">
+
+                            <!-- Label -->
+                            <label class="form-label mb-1">
+                                Текст 2
+                            </label>
+                            <br>
+                            <!-- Textarea -->
+                            <textarea class="editor" name="text_footer#{{ lang.code }}" placeholder="Text">{% field_data field='text_footer' lang=lang %}</textarea>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <br>
+
+                    <div class="form-group">
+                        <!-- Label  -->
+                        <label class="form-label">
+                            Порядок
+                        </label>
+                        <br>
+                        <!-- Input -->
+                        <input type="number" value="{% field_data field='order' lang=lang %}"
+                            name="order" class="form-control" placeholder="Order" min="0">
+                        <div class="invalid-feedback" style="display: block;">
+                            {% if errors.order %}
+                            {{ errors.order|list_item:0 }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="btn-box text-end">
+                        <a href="{% url success_url %}" class="btn btn-secondary">
+                            Отменить
+                        </a>
+                        <button type="submit" class="btn w-60 btn-primary">
+                            Сохранить
+                        </button>
+                    </div>
+                    <!-- Buttons -->
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    for (let txt of document.querySelectorAll('.editor')) {
+        CKEDITOR.replace(txt)
+    }
+</script>
+<!-- Form -->
+{% endblock %}

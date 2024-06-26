@@ -1,0 +1,138 @@
+{% extends 'admin/base_template.html' %}
+{% load static %}
+{% load get_item %}
+{% load image_thumb %}
+
+{% block title %} Главная {% endblock %}
+
+
+{% block page_title %} Главная {% endblock %}
+
+
+{% block nav_ol %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="&quot;page&quot;"><a href="{% url 'home' %}">Главная</a></li>
+</ol>
+{% endblock %}
+
+
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!-- Form -->
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-header-title">Результаты опроса</h1>
+    </div>
+    <div class="card-body">    
+        <div class="row">
+            {% for question in questions %}
+            <div class="col-12 col-xl-4">
+                <h2 class="card-header-title">{{ question.question|get_item:lang.code }}</h2>
+                <div id="chart-{{ question.id }}"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-header-title">Результаты оценки сайта</h1>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12 col-xl-8">
+                <div id="chart-pie"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let answersArray = []
+    let categories = []
+</script>
+
+{% for question in questions %}
+<script>
+    answersArray = []
+    categories = []
+    // {% for answer in question.answers.all %}
+    console.log('{{ answer.id }}')
+        answersArray.push(Number.parseInt(`{{ answer.selected__count }}`))
+    // {% endfor %}
+
+    // {% for answer in question.answers.all %}
+        categories.push(`{{ answer.answer|get_item:lang.code }}`)
+    // {% endfor %}
+
+     var options = {
+          series: [{
+          data: answersArray
+        }],
+          chart: {
+          type: 'bar',
+          height: 200
+        },
+        plotOptions: {
+          bar: {
+            borderRadius: 4,
+            borderRadiusApplication: 'end',
+            horizontal: true,
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        xaxis: {
+          categories: categories,
+        }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#chart-{{ question.id }}"), options);
+        chart.render();
+      
+</script>
+{% endfor %}
+
+
+<script>
+
+    let rateAnswers = []
+
+    //'{% for ans in rate_answers %}'
+    rateAnswers.push(Number.parseInt('{{ ans }}'))
+    //'{% endfor %}'
+
+    var optionsPie = {
+          series: rateAnswers,
+          chart: {
+          width: 500,
+          type: 'pie',
+        },
+        labels: ["Variant 1", "Variant 2", "Variant 3", "Variant 4"],
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }]
+        };
+
+    var chart = new ApexCharts(document.querySelector("#chart-pie"), optionsPie);
+    chart.render();
+</script>
+
+
+<!-- JAVASCRIPT -->
+
+<script src="{% static 'assets/js/video_type.js' %}"></script>
+<!-- Vendor JS -->
+{% endblock %}

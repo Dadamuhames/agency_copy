@@ -1,0 +1,215 @@
+{% extends 'admin/base_template.html' %}
+{% load static %}
+{% load get_item %}
+{% load image_thumb %}
+{% load field_data %}
+
+{% block title %} Нормативные документы {% endblock %}
+
+
+{% block page_title %} Нормативные документы {% endblock %}
+
+
+{% block nav_ol %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+    <li class="breadcrumb-item ">
+        <a href="{% url 'regulatory_documents_list' %}">Нормативные документы</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="&quot;page&quot;">
+        Создать
+    </li>
+</ol>
+{% endblock %}
+
+{% block content_width %} class="col-11" {% endblock %}
+
+{% block css %} 
+<style>
+    .custom-tab > button {
+        pointer-events: none;
+    }
+
+    .delete-data > * {
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="row" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    <input type="hidden" name="dropzone-key" value="{{ dropzone_key }}">
+    <input type="hidden" name="url" value="{{ request.get_full_path }}">
+
+    <div class="col-12 col-xl-8">
+        <div class="card mt-3">
+            <div class="crd-header p-4 pb-0">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    {% for lang in langs %}
+                    {% if lang == langs.first %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3 py-2 active" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                            data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                            aria-selected="true">{{ lang.name }}</button>
+                    </li>
+                    {% else %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link px-3 py-2" id="tab_{{ lang.id }}" data-bs-toggle="tab"
+                            data-bs-target="#{{ lang.code }}" type="button" role="tab" aria-controls="{{ lang.code }}"
+                            aria-selected="false">{{ lang.name }}</button>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-bodyb p-5">
+                <div class="tab-content" id="myTabContent">
+                    {% for lang in langs %}
+                    <div {% if lang == langs.first %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="{{ lang.code }}" role="tabpanel"
+                        aria-labelledby="{{ lang.code }}">
+                        <div class="form-group">
+                            <!-- Label  -->
+                            <label {% if lang.default %} class="form-label required" {% else %} class="form-label" {% endif %}>
+                                Загловок
+                            </label>
+                            <br>
+                            <!-- Input -->
+                            <input type="text" name="title#{{ lang.code }}" class="form-control" 
+                            value="{% field_data field='title' lang=lang %}"
+                            {% if lang.default %} required {% endif %}>
+                            {% if lang.default %}
+                            <div class="invalid-feedback" style="display: block;">
+                                {% if errors.title %}
+                                {{ errors.title|list_item:0 }}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Project description -->
+                        <div class="form-group">
+
+                            <!-- Label -->
+                            <label class="form-label mb-1">
+                                Текст
+                            </label>
+                            <br>
+                            <!-- Textarea -->
+                            <textarea class="editor" name="text#{{ lang.code }}" placeholder="Text">{% if object.text and object.text|get_item:lang.code %}{{ object.text|get_item:lang.code}}{% elif request_post and request_post|get_item:'text' %}{{ request_post|get_item:'text'|get_item:lang.code }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                    {% endfor %}
+                        <!-- Buttons -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="card mt-3">
+            <div class="card-body p-4">
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Категория
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <select class="form-select mb-4" id="category-select" data-choices name="category">
+                        <option value="">-----</option>
+                        {% for ctg in relateds %}
+                        {% if object and ctg == object.category %}
+                        <option value="{{ ctg.id }}" selected> {{ ctg.title|get_item:lang.code }}</option>
+                        {% elif request_post and ctg == request_post|get_item:'category' %}
+                        <option value="{{ ctg.id }}" selected> {{ ctg.title|get_item:lang.code }}</option>
+                        {% else %}
+                        <option value="{{ ctg.id }}"> {{ ctg.title|get_item:lang.code }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback" id="ctg_error">
+                        This field is required
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Дата
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <input type="text" name="date"
+                    {% if object.date %} value="{{ object.date|date:'Y-m-d' }}"    
+                    {% endif %} class="form-control" id="date-input"  data-flatpickr='{"dateFormat": "Y-m-d"}'>
+                </div>
+
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Code
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <input type="text" value="{% field_data field='code' lang=lang %}" name="code" class="form-control" placeholder="File url">
+                </div>
+
+                <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        File url
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <input type="url" value="{% field_data field='url' lang=lang %}" name="url" class="form-control" placeholder="File url">
+                </div>
+
+                 <div class="form-group">
+                    <!-- Label  -->
+                    <label class="form-label">
+                        Файл
+                    </label>
+                    <br>
+                    <!-- Input -->
+                    <input type="file" name="file" class="form-control" id="customFileUploadMultiple">
+                    {% if object and object.file %}
+                    <div class="row">
+                        <a class="d-block col-6" href="{{ object.file.url }}">Скачать</a>
+                        <a class="text-danger d-block col-6" style="cursor: pointer;"
+                            onclick="var result = confirm('Want to delete?');if (result){submit_form('delete-form{{ object.id }}')}"
+                            data-dz-remove>Удалить</a>
+                        <div action="{% url 'delete_model_field' %}" id="delete-form{{ object.id }}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="obj_id" value="{{ object.id }}">
+                            <input type="hidden" name="field" value="file">
+                            <input type="hidden" name="model_name" value="Report">
+                            <input type="hidden" name="app_name" value="activities">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div> 
+
+
+
+                <div class="btn-box text-end">
+                    <a href="{% url success_url %}" class="btn w-30 btn-secondary">
+                        Отменить
+                    </a>
+                    <input type="submit" href="#" class="btn w-40 btn-primary" value="Сохранить">
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="{% static 'assets/js/new_main.js' %}"></script>
+
+<script>
+    for (let txt of document.querySelectorAll('.editor')) {
+        CKEDITOR.replace(txt)
+    }
+</script>
+<!-- Form -->
+{% endblock %}
